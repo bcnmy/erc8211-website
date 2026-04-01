@@ -1,0 +1,74 @@
+---
+---
+
+<section id="compatibility" class="py-20 border-t border-ink-100">
+  <div class="article-container">
+    <h2 class="text-3xl sm:text-4xl font-bold mb-4">Universal compatibility</h2>
+
+    <div class="prose-body mb-10">
+      <p>
+        The standard is defined at the encoding and interface level &mdash; not as a specific
+        module. The same <code>ComposableExecution[]</code> encoding works with every smart
+        account architecture. One wire format, one interface, thin adapters.
+      </p>
+    </div>
+
+    <!-- Account standards grid -->
+    <div class="grid sm:grid-cols-2 gap-4 mb-10">
+      <div class="card p-5">
+        <div class="flex items-center gap-3 mb-2">
+          <code class="label text-[11px]">ERC-7579</code>
+          <span class="text-sm font-semibold text-ink-900">Executor Module</span>
+        </div>
+        <p class="text-xs text-ink-500 leading-relaxed">
+          Wraps <code>IComposableExecution</code> as a standard executor module. Installs through
+          the ERC-7579 module lifecycle.
+        </p>
+      </div>
+      <div class="card p-5">
+        <div class="flex items-center gap-3 mb-2">
+          <code class="label text-[11px]">ERC-6900</code>
+          <span class="text-sm font-semibold text-ink-900">Plugin</span>
+        </div>
+        <p class="text-xs text-ink-500 leading-relaxed">
+          Registers <code>executeComposable</code> as an execution function via the ERC-6900 manifest.
+        </p>
+      </div>
+      <div class="card p-5">
+        <div class="flex items-center gap-3 mb-2">
+          <code class="label text-[11px]">Native</code>
+          <span class="text-sm font-semibold text-ink-900">Direct Inheritance</span>
+        </div>
+        <p class="text-xs text-ink-500 leading-relaxed">
+          Smart accounts implement <code>IComposableExecution</code> directly. No module wrapper, no
+          cross-contract overhead.
+        </p>
+      </div>
+      <div class="card p-5">
+        <div class="flex items-center gap-3 mb-2">
+          <code class="label text-[11px]">ERC-7702</code>
+          <span class="text-sm font-semibold text-ink-900">Delegation Target</span>
+        </div>
+        <p class="text-xs text-ink-500 leading-relaxed">
+          EOAs delegate to an implementation contract. Composable execution without a smart account deployment.
+        </p>
+      </div>
+    </div>
+
+    <!-- Additional compat -->
+    <div class="rounded-lg p-5 mb-4" style="background: #f8f9fa; border: 1px solid #ebebeb;">
+      <div class="text-xs font-mono text-ink-400 mb-3">Also compatible with</div>
+      <div class="flex flex-wrap gap-x-6 gap-y-2 text-sm text-ink-700">
+        <div><strong>ERC-4337</strong> <span class="text-ink-400">Smart Accounts</span></div>
+        <div><strong>EIP-5792</strong> <span class="text-ink-400">wallet_sendCalls</span></div>
+        <div><strong>EIP-8141</strong> <span class="text-ink-400">Frame Transactions</span></div>
+        <div><strong>ERC-7683 / 7786</strong> <span class="text-ink-400">Interop layers</span></div>
+      </div>
+    </div>
+
+    <p class="text-xs text-ink-400 leading-relaxed">
+      No existing smart account requires migration. The encoding format is self-contained
+      and the interface is a single function &mdash; adapters for any account standard are minimal.
+    </p>
+  </div>
+</section>

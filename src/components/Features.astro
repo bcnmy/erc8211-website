@@ -1,0 +1,110 @@
+---
+---
+
+<section id="features" class="py-20 border-t border-ink-100">
+  <div class="article-container">
+    <h2 class="text-3xl sm:text-4xl font-bold mb-3">What Smart Batching unlocks</h2>
+    <p class="text-ink-500 mb-14 max-w-xl">
+      Three primitives that turn a static batch into a programmable execution plan.
+    </p>
+
+    <div class="grid sm:grid-cols-3 gap-5">
+
+      <!-- 1 · Runtime Parameter Injection -->
+      <div class="card overflow-hidden flex flex-col">
+        <div class="px-6 pt-6 pb-4">
+          <div class="w-12 h-12 rounded-full bg-[#6366f1]/[0.08] flex items-center justify-center mb-5">
+            <svg class="w-5 h-5 text-[#6366f1]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M4 14a1 1 0 0 1-.78-1.63l9.9-10.2a.5.5 0 0 1 .86.46l-1.92 6.02A1 1 0 0 0 13 10h7a1 1 0 0 1 .78 1.63l-9.9 10.2a.5.5 0 0 1-.86-.46l1.92-6.02A1 1 0 0 0 11 14z"/>
+            </svg>
+          </div>
+          <span class="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-mono font-medium tracking-wide text-[#6366f1] bg-[#6366f1]/[0.06] mb-3">01</span>
+          <h3 class="text-base font-bold text-ink-900 mb-2">Runtime parameter injection</h3>
+          <p class="text-[13px] text-ink-500 leading-relaxed">
+            Each parameter declares a <strong class="text-ink-700">fetcher</strong> that resolves its
+            value on-chain at execution &mdash; reading balances, oracles, or any contract state.
+          </p>
+        </div>
+
+        <div class="mt-auto mx-4 mb-4 rounded-lg border border-[#6366f1]/10 bg-[#6366f1]/[0.02] p-3.5">
+          <div class="text-[10px] font-mono text-[#6366f1]/60 mb-2 uppercase tracking-wider">Instead of</div>
+          <code class="text-[13px] text-ink-400 line-through decoration-danger/40 block mb-2">supply(0.05 WETH)</code>
+          <div class="text-[10px] font-mono text-[#6366f1]/60 mb-2 uppercase tracking-wider">You write</div>
+          <code class="text-[13px] text-ink-800 block">supply(<span class="text-[#6366f1] font-semibold">BALANCE(WETH)</span>)</code>
+        </div>
+      </div>
+
+      <!-- 2 · Pre-and-Post Assertions -->
+      <div class="card overflow-hidden flex flex-col">
+        <div class="px-6 pt-6 pb-4">
+          <div class="w-12 h-12 rounded-full bg-[#10b981]/[0.08] flex items-center justify-center mb-5">
+            <svg class="w-5 h-5 text-[#10b981]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/>
+              <path d="m9 12 2 2 4-4"/>
+            </svg>
+          </div>
+          <span class="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-mono font-medium tracking-wide text-[#10b981] bg-[#10b981]/[0.06] mb-3">02</span>
+          <h3 class="text-base font-bold text-ink-900 mb-2">Pre-and-post assertions</h3>
+          <p class="text-[13px] text-ink-500 leading-relaxed">
+            Every resolved value runs through inline <strong class="text-ink-700">constraints</strong>.
+            Entries with <code class="text-[11px]">target&nbsp;=&nbsp;address(0)</code> act as pure
+            predicate checks that revert the batch if conditions fail.
+          </p>
+        </div>
+
+        <div class="mt-auto mx-4 mb-4 rounded-lg border border-[#10b981]/10 bg-[#10b981]/[0.02] p-3.5">
+          <div class="text-[10px] font-mono text-[#10b981]/60 mb-2 uppercase tracking-wider">Constraints</div>
+          <div class="space-y-1.5">
+            <div class="flex items-center gap-1.5">
+              <svg class="w-3 h-3 text-[#10b981] flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+              <code class="text-[12px] text-ink-700">amount <span class="text-[#10b981] font-semibold">GTE</span> min</code>
+            </div>
+            <div class="flex items-center gap-1.5">
+              <svg class="w-3 h-3 text-[#10b981] flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+              <code class="text-[12px] text-ink-700">price <span class="text-[#10b981] font-semibold">LTE</span> maxPrice</code>
+            </div>
+            <div class="flex items-center gap-1.5">
+              <svg class="w-3 h-3 text-[#10b981] flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+              <code class="text-[12px] text-ink-700">token <span class="text-[#10b981] font-semibold">EQ</span> expected</code>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 3 · Multi-Transaction Context -->
+      <div class="card overflow-hidden flex flex-col">
+        <div class="px-6 pt-6 pb-4">
+          <div class="w-12 h-12 rounded-full bg-[#f59e0b]/[0.08] flex items-center justify-center mb-5">
+            <svg class="w-5 h-5 text-[#f59e0b]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <ellipse cx="12" cy="5" rx="9" ry="3"/>
+              <path d="M3 5v14a9 3 0 0 0 18 0V5"/>
+              <path d="M3 12a9 3 0 0 0 18 0"/>
+            </svg>
+          </div>
+          <span class="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-mono font-medium tracking-wide text-[#f59e0b] bg-[#f59e0b]/[0.06] mb-3">03</span>
+          <h3 class="text-base font-bold text-ink-900 mb-2">Multi-transaction context</h3>
+          <p class="text-[13px] text-ink-500 leading-relaxed">
+            A shared <strong class="text-ink-700">Storage contract</strong> lets entries write output
+            values that later entries &mdash; or even the next UserOperation &mdash; can read
+            without custom contracts.
+          </p>
+        </div>
+
+        <div class="mt-auto mx-4 mb-4 rounded-lg border border-[#f59e0b]/10 bg-[#f59e0b]/[0.02] p-3.5">
+          <div class="text-[10px] font-mono text-[#f59e0b]/60 mb-2 uppercase tracking-wider">Data flow</div>
+          <div class="flex items-center gap-1.5 flex-wrap">
+            <code class="text-[12px] px-2 py-1 rounded bg-white border border-ink-100 text-ink-800">swap()</code>
+            <svg class="w-3.5 h-3.5 text-[#f59e0b] flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+            <code class="text-[12px] px-2 py-1 rounded bg-[#f59e0b]/[0.08] border border-[#f59e0b]/20 text-[#f59e0b] font-semibold">Storage</code>
+            <svg class="w-3.5 h-3.5 text-[#f59e0b] flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+            <code class="text-[12px] px-2 py-1 rounded bg-white border border-ink-100 text-ink-800">supply()</code>
+          </div>
+          <div class="mt-2 text-[11px] text-ink-400">
+            Persists across entries and transactions.
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>

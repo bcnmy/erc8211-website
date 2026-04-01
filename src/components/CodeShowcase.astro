@@ -1,0 +1,78 @@
+---
+const codeHtml = `<span class="text-purple-600">const</span> <span class="text-ink-900">batch</span> = <span class="text-accent">smartBatch</span>([
+  <span class="text-accent">swap</span>(<span class="text-ink-600">{</span>
+    <span class="text-ink-700">from:</span> <span class="text-orange-600">WETH</span>,
+    <span class="text-ink-700">to:</span> <span class="text-orange-600">USDC</span>,
+    <span class="text-ink-700">amount:</span> <span class="text-accent">fullBalance</span>()
+  <span class="text-ink-600">}</span>),
+
+  <span class="text-accent">predicate</span>(<span class="text-ink-600">{</span>
+    <span class="text-ink-700">balance:</span> <span class="text-accent">gte</span>(<span class="text-orange-600">USDC</span>, <span class="text-ink-700">account</span>, <span class="text-emerald-600">2500e6</span>)
+  <span class="text-ink-600">}</span>),
+
+  <span class="text-accent">supply</span>(<span class="text-ink-600">{</span>
+    <span class="text-ink-700">protocol:</span> <span class="text-emerald-600">"aave"</span>,
+    <span class="text-ink-700">token:</span> <span class="text-orange-600">USDC</span>,
+    <span class="text-ink-700">amount:</span> <span class="text-accent">fullBalance</span>()
+  <span class="text-ink-600">}</span>),
+
+  <span class="text-accent">stake</span>(<span class="text-ink-600">{</span>
+    <span class="text-ink-700">token:</span> <span class="text-orange-600">aUSDC</span>,
+    <span class="text-ink-700">amount:</span> <span class="text-accent">fullBalance</span>()
+  <span class="text-ink-600">}</span>),
+]);`;
+---
+
+<section id="developer-experience" class="py-20 border-t border-ink-100">
+  <div class="article-container">
+    <h2 class="text-3xl sm:text-4xl font-bold mb-4">From transactions to programs</h2>
+
+    <div class="prose-body mb-10">
+      <p>
+        Developers author multi-step, multi-chain programs in TypeScript.
+        The SDK compiles to <code>ComposableExecution[]</code> entries with fetchers,
+        constraints, and storage instructions. The user signs once. Relayers execute on-chain.
+      </p>
+    </div>
+
+    <!-- Code block -->
+    <div class="code-block mb-8">
+      <div class="flex items-center gap-2 px-4 py-2.5 border-b border-ink-100">
+        <span class="text-xs font-mono text-ink-400">batch.ts</span>
+      </div>
+      <div class="p-5 overflow-x-auto">
+        <pre class="text-[13px] leading-relaxed font-mono"><code set:html={codeHtml} /></pre>
+      </div>
+    </div>
+
+    <div class="prose-body mb-12">
+      <p>
+        This is a complete four-step DeFi flow: swap WETH for USDC, verify the balance
+        meets a minimum, supply to Aave, stake the receipt tokens. Every amount resolves
+        dynamically via <code>fullBalance()</code> &mdash; no hardcoded values, no leftover dust.
+      </p>
+    </div>
+
+    <!-- Key points -->
+    <div class="grid sm:grid-cols-3 gap-4">
+      <div class="card-hover p-5">
+        <div class="text-sm font-semibold text-ink-900 mb-1.5">No Solidity required</div>
+        <p class="text-xs text-ink-500 leading-relaxed">
+          Write flows in TypeScript. The SDK compiles to standard on-chain encoding.
+        </p>
+      </div>
+      <div class="card-hover p-5">
+        <div class="text-sm font-semibold text-ink-900 mb-1.5">No contract deployment</div>
+        <p class="text-xs text-ink-500 leading-relaxed">
+          No new attack surface. No audit cycles when flows change.
+        </p>
+      </div>
+      <div class="card-hover p-5">
+        <div class="text-sm font-semibold text-ink-900 mb-1.5">Sign once, execute anywhere</div>
+        <p class="text-xs text-ink-500 leading-relaxed">
+          One signature over a Merkle root. Relayers handle submission.
+        </p>
+      </div>
+    </div>
+  </div>
+</section>

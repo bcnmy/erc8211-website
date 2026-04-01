@@ -1,0 +1,222 @@
+---
+---
+
+<section id="problem" class="py-20">
+  <div class="article-container">
+    <h2 class="text-3xl sm:text-4xl font-bold mb-4">The problem with static batching</h2>
+
+    <div class="prose-body mb-12">
+      <p>
+        An Ethereum transaction is a single function call. ERC-4337 and EIP-5792 extended
+        this with batch execution &mdash; multiple calls under one signature &mdash; but every
+        parameter is <strong>static</strong>: frozen at signing time, blind to on-chain state at execution.
+      </p>
+      <p>
+        Real-world DeFi flows produce dynamic, unpredictable outputs. Static batching
+        forces two bad choices: hardcode optimistic amounts (risking reverts) or
+        underestimate conservatively (leaving value stranded).
+      </p>
+    </div>
+
+    <!-- Failure examples grid -->
+    <div class="grid sm:grid-cols-2 gap-5 mb-10">
+
+      <!-- 1 · Swap → Supply -->
+      <div class="card p-5 sm:p-6">
+        <div class="flex items-center gap-2 mb-4 text-[11px] font-mono text-ink-400">
+          <span class="w-1.5 h-1.5 rounded-full bg-danger"></span>
+          SWAP &rarr; SUPPLY
+        </div>
+        <div class="space-y-2.5">
+          <div class="flex items-start gap-2.5 p-2.5 rounded-lg bg-page-cool border border-ink-100">
+            <span class="flex-shrink-0 w-5 h-5 rounded bg-success/10 text-success text-[10px] font-mono font-bold flex items-center justify-center mt-0.5">1</span>
+            <div class="flex-1 min-w-0">
+              <code class="text-[13px] text-ink-800">swap(100 USDC &rarr; WETH)</code>
+              <div class="text-[11px] text-ink-400 mt-0.5">Returns <span class="text-success font-medium">0.0495 WETH</span></div>
+            </div>
+            <span class="label-success text-[10px] flex-shrink-0 mt-0.5">OK</span>
+          </div>
+          <div class="flex items-start gap-2.5 p-2.5 rounded-lg bg-danger/[0.02] border border-danger/10">
+            <span class="flex-shrink-0 w-5 h-5 rounded bg-danger/10 text-danger text-[10px] font-mono font-bold flex items-center justify-center mt-0.5">2</span>
+            <div class="flex-1 min-w-0">
+              <code class="text-[13px] text-ink-800">supply(<s class="text-danger">0.05 WETH</s>)</code>
+              <div class="text-[11px] text-ink-400 mt-0.5">Hardcoded <span class="text-danger font-medium">0.05</span> but only 0.0495 available</div>
+            </div>
+            <span class="label-danger text-[10px] flex-shrink-0 mt-0.5">REVERT</span>
+          </div>
+        </div>
+        <div class="mt-4 pt-3 border-t border-ink-100 text-[11px] text-ink-400">
+          Swap output depends on price impact, slippage, and MEV. The hardcoded amount is a guess.
+        </div>
+      </div>
+
+      <!-- 2 · Vault Withdraw → Bridge -->
+      <div class="card p-5 sm:p-6">
+        <div class="flex items-center gap-2 mb-4 text-[11px] font-mono text-ink-400">
+          <span class="w-1.5 h-1.5 rounded-full bg-danger"></span>
+          VAULT WITHDRAW &rarr; BRIDGE
+        </div>
+        <div class="space-y-2.5">
+          <div class="flex items-start gap-2.5 p-2.5 rounded-lg bg-page-cool border border-ink-100">
+            <span class="flex-shrink-0 w-5 h-5 rounded bg-success/10 text-success text-[10px] font-mono font-bold flex items-center justify-center mt-0.5">1</span>
+            <div class="flex-1 min-w-0">
+              <code class="text-[13px] text-ink-800">withdraw(500 shares)</code>
+              <div class="text-[11px] text-ink-400 mt-0.5">Returns <span class="text-success font-medium">487.3 USDC</span> (share rate shifted)</div>
+            </div>
+            <span class="label-success text-[10px] flex-shrink-0 mt-0.5">OK</span>
+          </div>
+          <div class="flex items-start gap-2.5 p-2.5 rounded-lg bg-danger/[0.02] border border-danger/10">
+            <span class="flex-shrink-0 w-5 h-5 rounded bg-danger/10 text-danger text-[10px] font-mono font-bold flex items-center justify-center mt-0.5">2</span>
+            <div class="flex-1 min-w-0">
+              <code class="text-[13px] text-ink-800">bridge(<s class="text-danger">500 USDC</s>)</code>
+              <div class="text-[11px] text-ink-400 mt-0.5">Hardcoded <span class="text-danger font-medium">500</span> but only 487.3 received</div>
+            </div>
+            <span class="label-danger text-[10px] flex-shrink-0 mt-0.5">REVERT</span>
+          </div>
+        </div>
+        <div class="mt-4 pt-3 border-t border-ink-100 text-[11px] text-ink-400">
+          Lending vault share-to-asset conversion is variable. The withdrawal amount can&rsquo;t be predicted.
+        </div>
+      </div>
+
+      <!-- 3 · Bridge → DeFi -->
+      <div class="card p-5 sm:p-6">
+        <div class="flex items-center gap-2 mb-4 text-[11px] font-mono text-ink-400">
+          <span class="w-1.5 h-1.5 rounded-full bg-danger"></span>
+          BRIDGE &rarr; DEFI
+        </div>
+        <div class="space-y-2.5">
+          <div class="flex items-start gap-2.5 p-2.5 rounded-lg bg-page-cool border border-ink-100">
+            <span class="flex-shrink-0 w-5 h-5 rounded bg-success/10 text-success text-[10px] font-mono font-bold flex items-center justify-center mt-0.5">1</span>
+            <div class="flex-1 min-w-0">
+              <code class="text-[13px] text-ink-800">bridge(100 USDC &rarr; Optimism)</code>
+              <div class="text-[11px] text-ink-400 mt-0.5">Delivers <span class="text-success font-medium">99.7 USDC</span> after variable fees</div>
+            </div>
+            <span class="label-success text-[10px] flex-shrink-0 mt-0.5">OK</span>
+          </div>
+          <div class="flex items-start gap-2.5 p-2.5 rounded-lg bg-danger/[0.02] border border-danger/10">
+            <span class="flex-shrink-0 w-5 h-5 rounded bg-danger/10 text-danger text-[10px] font-mono font-bold flex items-center justify-center mt-0.5">2</span>
+            <div class="flex-1 min-w-0">
+              <code class="text-[13px] text-ink-800">deposit(<s class="text-danger">100 USDC</s>)</code>
+              <div class="text-[11px] text-ink-400 mt-0.5">Hardcoded <span class="text-danger font-medium">100</span> but bridge took variable fees</div>
+            </div>
+            <span class="label-danger text-[10px] flex-shrink-0 mt-0.5">REVERT</span>
+          </div>
+        </div>
+        <div class="mt-4 pt-3 border-t border-ink-100 text-[11px] text-ink-400">
+          Bridge delivery has unpredictable delay and variable fees. No way to know the exact arrival amount.
+        </div>
+      </div>
+
+      <!-- 4 · Rebalance / Liquidation -->
+      <div class="card p-5 sm:p-6">
+        <div class="flex items-center gap-2 mb-4 text-[11px] font-mono text-ink-400">
+          <span class="w-1.5 h-1.5 rounded-full bg-danger"></span>
+          REBALANCE FLOW
+        </div>
+        <div class="space-y-2.5">
+          <div class="flex items-start gap-2.5 p-2.5 rounded-lg bg-page-cool border border-ink-100">
+            <span class="flex-shrink-0 w-5 h-5 rounded bg-success/10 text-success text-[10px] font-mono font-bold flex items-center justify-center mt-0.5">1</span>
+            <div class="flex-1 min-w-0">
+              <code class="text-[13px] text-ink-800">repay(debt on Aave)</code>
+              <div class="text-[11px] text-ink-400 mt-0.5">Interest accrued since signing &mdash; <span class="text-success font-medium">OK</span></div>
+            </div>
+            <span class="label-success text-[10px] flex-shrink-0 mt-0.5">OK</span>
+          </div>
+          <div class="flex items-start gap-2.5 p-2.5 rounded-lg bg-danger/[0.02] border border-danger/10">
+            <span class="flex-shrink-0 w-5 h-5 rounded bg-danger/10 text-danger text-[10px] font-mono font-bold flex items-center justify-center mt-0.5">2</span>
+            <div class="flex-1 min-w-0">
+              <code class="text-[13px] text-ink-800">borrow(<s class="text-danger">exact collateral ratio</s>)</code>
+              <div class="text-[11px] text-ink-400 mt-0.5">Oracle price moved &mdash; ratio stale, position unsafe</div>
+            </div>
+            <span class="label-danger text-[10px] flex-shrink-0 mt-0.5">REVERT</span>
+          </div>
+        </div>
+        <div class="mt-4 pt-3 border-t border-ink-100 text-[11px] text-ink-400">
+          Liquidation thresholds and oracle prices change block-to-block. Hardcoded ratios are immediately stale.
+        </div>
+      </div>
+
+      <!-- 5 · Full Balance Send (Dust) -->
+      <div class="card p-5 sm:p-6">
+        <div class="flex items-center gap-2 mb-4 text-[11px] font-mono text-ink-400">
+          <span class="w-1.5 h-1.5 rounded-full bg-danger"></span>
+          SEND FULL BALANCE
+        </div>
+        <div class="space-y-2.5">
+          <div class="flex items-start gap-2.5 p-2.5 rounded-lg bg-page-cool border border-ink-100">
+            <span class="flex-shrink-0 w-5 h-5 rounded bg-success/10 text-success text-[10px] font-mono font-bold flex items-center justify-center mt-0.5">1</span>
+            <div class="flex-1 min-w-0">
+              <code class="text-[13px] text-ink-800">transfer(<s class="text-danger">1.0 ETH</s>)</code>
+              <div class="text-[11px] text-ink-400 mt-0.5">Hardcoded <span class="text-danger font-medium">1.0</span> but gas costs unknown at signing</div>
+            </div>
+            <span class="label-success text-[10px] flex-shrink-0 mt-0.5">OK</span>
+          </div>
+          <div class="flex items-start gap-2.5 p-2.5 rounded-lg bg-[#f59e0b]/[0.03] border border-[#f59e0b]/15">
+            <span class="flex-shrink-0 w-5 h-5 rounded bg-[#f59e0b]/10 text-[#f59e0b] text-[10px] font-mono font-bold flex items-center justify-center mt-0.5">&empty;</span>
+            <div class="flex-1 min-w-0">
+              <code class="text-[13px] text-ink-800">account balance</code>
+              <div class="text-[11px] text-ink-400 mt-0.5"><span class="text-[#f59e0b] font-medium">0.000031 ETH</span> dust remains &mdash; stranded forever</div>
+            </div>
+            <span class="text-[10px] font-medium text-[#f59e0b] bg-[#f59e0b]/[0.06] px-1.5 py-0.5 rounded flex-shrink-0 mt-0.5">DUST</span>
+          </div>
+        </div>
+        <div class="mt-4 pt-3 border-t border-ink-100 text-[11px] text-ink-400">
+          Gas cost is unpredictable. You can&rsquo;t hardcode "send everything" &mdash; dust always remains.
+        </div>
+      </div>
+
+      <!-- 6 · Slippage Protection -->
+      <div class="card p-5 sm:p-6">
+        <div class="flex items-center gap-2 mb-4 text-[11px] font-mono text-ink-400">
+          <span class="w-1.5 h-1.5 rounded-full bg-danger"></span>
+          SLIPPAGE PROTECTION
+        </div>
+        <div class="space-y-2.5">
+          <div class="flex items-start gap-2.5 p-2.5 rounded-lg bg-page-cool border border-ink-100">
+            <span class="flex-shrink-0 w-5 h-5 rounded bg-success/10 text-success text-[10px] font-mono font-bold flex items-center justify-center mt-0.5">1</span>
+            <div class="flex-1 min-w-0">
+              <code class="text-[13px] text-ink-800">swap(1 ETH &rarr; USDC)</code>
+              <div class="text-[11px] text-ink-400 mt-0.5">Sandwiched &mdash; returns only <span class="text-danger font-medium">$1,800</span> instead of $2,500</div>
+            </div>
+            <span class="label-success text-[10px] flex-shrink-0 mt-0.5">OK</span>
+          </div>
+          <div class="flex items-start gap-2.5 p-2.5 rounded-lg bg-danger/[0.02] border border-danger/10">
+            <span class="flex-shrink-0 w-5 h-5 rounded bg-danger/10 text-danger text-[10px] font-mono font-bold flex items-center justify-center mt-0.5">2</span>
+            <div class="flex-1 min-w-0">
+              <code class="text-[13px] text-ink-800">supply(<s class="text-danger">$1,800 USDC</s>)</code>
+              <div class="text-[11px] text-ink-400 mt-0.5">No way to assert "output &ge; min" &mdash; bad trade executes silently</div>
+            </div>
+            <span class="text-[10px] font-medium text-danger bg-danger/[0.06] px-1.5 py-0.5 rounded flex-shrink-0 mt-0.5">NO GUARD</span>
+          </div>
+        </div>
+        <div class="mt-4 pt-3 border-t border-ink-100 text-[11px] text-ink-400">
+          Static batches can&rsquo;t assert conditions on intermediate outputs. MEV extracts value with no protection.
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Pain points -->
+    <div class="grid sm:grid-cols-3 gap-4">
+      <div class="card-hover p-5">
+        <div class="text-sm font-semibold text-ink-900 mb-1.5">Frozen at signing</div>
+        <p class="text-xs text-ink-500 leading-relaxed">
+          Parameters are locked when you sign. If on-chain state changes before execution, too bad.
+        </p>
+      </div>
+      <div class="card-hover p-5">
+        <div class="text-sm font-semibold text-ink-900 mb-1.5">Blind to state</div>
+        <p class="text-xs text-ink-500 leading-relaxed">
+          No awareness of balances, oracle prices, or any live on-chain data at execution time.
+        </p>
+      </div>
+      <div class="card-hover p-5">
+        <div class="text-sm font-semibold text-ink-900 mb-1.5">Atomic revert</div>
+        <p class="text-xs text-ink-500 leading-relaxed">
+          One stale parameter in a multi-step flow causes the entire batch to revert. All or nothing.
+        </p>
+      </div>
+    </div>
+  </div>
+</section>

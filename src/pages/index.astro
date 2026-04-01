@@ -1,0 +1,30 @@
+---
+import Layout from '../layouts/Layout.astro';
+import Nav from '../components/Nav.astro';
+import Hero from '../components/Hero.astro';
+import DevelopedBy from '../components/DevelopedBy.astro';
+import ProblemSection from '../components/ProblemSection.astro';
+import Features from '../components/Features.astro';
+import BatchVisualization from '../components/BatchVisualization';
+import HowItWorks from '../components/HowItWorks.astro';
+import CrossChain from '../components/CrossChain';
+import CodeShowcase from '../components/CodeShowcase.astro';
+import Compatibility from '../components/Compatibility.astro';
+import Footer from '../components/Footer.astro';
+---
+
+<Layout>
+  <Nav />
+  <main>
+    <Hero />
+    <DevelopedBy />
+    <ProblemSection />
+    <Features />
+    <BatchVisualization client:visible />
+    <HowItWorks />
+    <CrossChain client:visible />
+    <CodeShowcase />
+    <Compatibility />
+  </main>
+  <Footer />
+</Layout>
