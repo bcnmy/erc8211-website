@@ -1,9 +1,10 @@
-import { useState, Fragment } from 'react';
+import { useState, useEffect, Fragment } from 'react';
 
 const MONO = '"JetBrains Mono", monospace';
 const ACCENT = '#2563eb';
 const SUCCESS = '#16a34a';
 const CODE_SIZE = 15;
+const CODE_SIZE_MOBILE = 13;
 
 /* ── Data types ───────────────────────────────────────────────── */
 
@@ -52,14 +53,61 @@ type Example = {
   steps: Step[];
 };
 
+/* ── Mobile detection hook ────────────────────────────────────── */
+
+function useIsMobile(breakpoint = 640) {
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const mql = window.matchMedia(`(max-width: ${breakpoint}px)`);
+    setIsMobile(mql.matches);
+    const handler = (e: MediaQueryListEvent) => setIsMobile(e.matches);
+    mql.addEventListener('change', handler);
+    return () => mql.removeEventListener('change', handler);
+  }, [breakpoint]);
+
+  return isMobile;
+}
+
+/* ── Active param info helper ─────────────────────────────────── */
+
+type ActiveParamInfo =
+  | { type: 'runtime'; param: RuntimeParam }
+  | { type: 'predicate'; step: PredicateStep };
+
+function getActiveParamInfo(
+  example: Example,
+  hoveredParam: string | null,
+): ActiveParamInfo | null {
+  if (!hoveredParam) return null;
+
+  if (hoveredParam.startsWith('pred-')) {
+    const stepIdx = parseInt(hoveredParam.replace('pred-', ''));
+    const step = example.steps[stepIdx];
+    if (step && isPredicate(step)) {
+      return { type: 'predicate', step };
+    }
+  } else {
+    const [sIdx, pIdx] = hoveredParam.split('-').map(Number);
+    const step = example.steps[sIdx];
+    if (step && !isPredicate(step)) {
+      const param = step.params[pIdx];
+      if (param?.type === 'runtime') {
+        return { type: 'runtime', param };
+      }
+    }
+  }
+  return null;
+}
+
 /* ── Examples ─────────────────────────────────────────────────── */
 
 const EXAMPLES: Example[] = [
   {
     id: 'swap-supply',
-    tab: 'Swap \u2192 Supply',
+    tab: 'Swap → Supply',
     subtitle:
-      'Swap USDC \u2192 USDT on Uniswap, then supply to Aave. The swap output is variable \u2014 smart batching resolves the exact amount at execution time.',
+      'Swap USDC → USDT on Uniswap, then supply to Aave. The swap output is variable — smart batching resolves the exact amount at execution time.',
     steps: [
       {
         contract: 'SwapRouter',
@@ -94,9 +142,9 @@ const EXAMPLES: Example[] = [
   },
   {
     id: 'withdraw-swap-supply',
-    tab: 'Withdraw \u2192 Swap \u2192 Supply',
+    tab: 'Withdraw → Swap → Supply',
     subtitle:
-      'Withdraw from Aave where interest accrues block\u2011by\u2011block \u2014 the exact redemption is unknown until execution. Swap the proceeds and supply to Compound.',
+      'Withdraw from Aave where interest accrues block\u2011by\u2011block — the exact redemption is unknown until execution. Swap the proceeds and supply to Compound.',
     steps: [
       {
         contract: 'AavePool',
@@ -148,7 +196,7 @@ const EXAMPLES: Example[] = [
     id: 'dustless-4337',
     tab: 'ERC\u20114337 dustless send',
     subtitle:
-      'Send your entire USDC balance when gas is also paid in USDC via a paymaster. The gas fee is deducted before your batch executes \u2014 smart batching reads whatever remains, leaving zero dust.',
+      'Send your entire USDC balance when gas is also paid in USDC via a paymaster. The gas fee is deducted before your batch executes — smart batching reads whatever remains, leaving zero dust.',
     contextNote:
       'ERC\u20114337 validation phase: paymaster deducts ~1.83 USDC for gas from account',
     steps: [
@@ -174,7 +222,7 @@ const EXAMPLES: Example[] = [
     id: 'slippage-protection',
     tab: 'Slippage protection',
     subtitle:
-      'Swap WETH \u2192 USDC, then assert a minimum output via a predicate entry \u2014 a batch step with no call target that purely checks on\u2011chain state. If slippage pushes the balance below the threshold, the entire batch reverts.',
+      'Swap WETH → USDC, then assert a minimum output via a predicate entry — a batch step with no call target that purely checks on\u2011chain state. If slippage pushes the balance below the threshold, the entire batch reverts.',
     steps: [
       {
         contract: 'SwapRouter',
@@ -203,7 +251,7 @@ const EXAMPLES: Example[] = [
     id: 'leverage-loop',
     tab: 'Leverage loop',
     subtitle:
-      'Build a leveraged lending position in a single signed batch \u2014 no custom looper contract. Supply collateral, borrow against it, swap back, and re\u2011supply. Today this requires deploying and auditing a bespoke contract per strategy.',
+      'Build a leveraged lending position in a single signed batch — no custom looper contract. Supply collateral, borrow against it, swap back, and re\u2011supply. Today this requires deploying and auditing a bespoke contract per strategy.',
     steps: [
       {
         contract: 'AavePool',
@@ -325,29 +373,31 @@ function RuntimeParamSpan({
   paramKey,
   hoveredParam,
   setHoveredParam,
+  isMobile,
 }: {
   param: RuntimeParam;
   paramKey: string;
   hoveredParam: string | null;
   setHoveredParam: (k: string | null) => void;
+  isMobile: boolean;
 }) {
   const active = hoveredParam === paramKey;
 
   return (
     <span
-      onMouseEnter={() => setHoveredParam(paramKey)}
-      onMouseLeave={() => setHoveredParam(null)}
+      onMouseEnter={isMobile ? undefined : () => setHoveredParam(paramKey)}
+      onMouseLeave={isMobile ? undefined : () => setHoveredParam(null)}
       onClick={() => setHoveredParam(active ? null : paramKey)}
       style={{ cursor: 'pointer', position: 'relative' }}
     >
       <span
         style={{
           fontFamily: MONO,
-          fontSize: CODE_SIZE,
+          fontSize: isMobile ? CODE_SIZE_MOBILE : CODE_SIZE,
           background: active ? 'rgba(37,99,235,0.10)' : 'rgba(37,99,235,0.05)',
           border: `1.5px dashed ${active ? ACCENT : 'rgba(37,99,235,0.25)'}`,
           borderRadius: 5,
-          padding: '4px 12px',
+          padding: isMobile ? '3px 8px' : '4px 12px',
           color: ACCENT,
           transition: 'all 0.2s ease',
           boxShadow: active ? '0 0 0 4px rgba(37,99,235,0.06)' : 'none',
@@ -357,36 +407,38 @@ function RuntimeParamSpan({
         {active ? param.resolved : 'runtime injected'}
       </span>
 
-      <ResolverTooltip active={active}>
-        <TipRow label="Fetcher type">
-          <FetcherBadge>{param.fetcherType}</FetcherBadge>
-        </TipRow>
-        <TipRow label="Resolves via">
-          <code style={{ fontFamily: MONO, fontSize: 12, color: '#1a1a1a' }}>
-            IERC20({param.balanceToken}).balanceOf(
-            <span style={{ color: '#8a8a8a' }}>self</span>)
-          </code>
-        </TipRow>
-        <TipRow label="Returns">
-          <code style={{ fontFamily: MONO, fontSize: 12, color: SUCCESS, fontWeight: 500 }}>
-            {param.returnsRaw}
-          </code>
-          <span style={{ fontSize: 11, color: '#8a8a8a', marginLeft: 6 }}>
-            ({param.returnsHuman})
-          </span>
-        </TipRow>
-        <TipRow label="Constraint" last>
-          <code style={{ fontFamily: MONO, fontSize: 12 }}>
-            <span style={{ color: '#1a1a1a' }}>{param.constraint}</span>
-            <span style={{ color: SUCCESS, marginLeft: 4 }}>✓ pass</span>
-          </code>
-        </TipRow>
-      </ResolverTooltip>
+      {!isMobile && (
+        <ResolverTooltip active={active}>
+          <TipRow label="Fetcher type">
+            <FetcherBadge>{param.fetcherType}</FetcherBadge>
+          </TipRow>
+          <TipRow label="Resolves via">
+            <code style={{ fontFamily: MONO, fontSize: 12, color: '#1a1a1a' }}>
+              IERC20({param.balanceToken}).balanceOf(
+              <span style={{ color: '#8a8a8a' }}>self</span>)
+            </code>
+          </TipRow>
+          <TipRow label="Returns">
+            <code style={{ fontFamily: MONO, fontSize: 12, color: SUCCESS, fontWeight: 500 }}>
+              {param.returnsRaw}
+            </code>
+            <span style={{ fontSize: 11, color: '#8a8a8a', marginLeft: 6 }}>
+              ({param.returnsHuman})
+            </span>
+          </TipRow>
+          <TipRow label="Constraint" last>
+            <code style={{ fontFamily: MONO, fontSize: 12 }}>
+              <span style={{ color: '#1a1a1a' }}>{param.constraint}</span>
+              <span style={{ color: SUCCESS, marginLeft: 4 }}>✓ pass</span>
+            </code>
+          </TipRow>
+        </ResolverTooltip>
+      )}
     </span>
   );
 }
 
-/* ── Shared tooltip shell ─────────────────────────────────────── */
+/* ── Shared tooltip shell (desktop only) ──────────────────────── */
 
 function ResolverTooltip({
   active,
@@ -487,37 +539,42 @@ function CallStepRow({
   stepIdx,
   hoveredParam,
   setHoveredParam,
+  isMobile,
 }: {
   step: CallStep;
   stepIdx: number;
   hoveredParam: string | null;
   setHoveredParam: (k: string | null) => void;
+  isMobile: boolean;
 }) {
   return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+    <div style={{ display: 'flex', alignItems: 'center', gap: isMobile ? 10 : 14, maxWidth: '100%' }}>
       <span style={badgeStyle}>{stepIdx + 1}</span>
-      <code style={{ fontFamily: MONO, fontSize: CODE_SIZE, whiteSpace: 'nowrap' }}>
-        <ContractName>{step.contract}</ContractName>
-        <Punc>.</Punc>
-        <FnName>{step.fn}</FnName>
-        <Punc>(</Punc>
-        {step.params.map((param, pIdx) => (
-          <Fragment key={pIdx}>
-            {pIdx > 0 && <Punc>, </Punc>}
-            {param.type === 'runtime' ? (
-              <RuntimeParamSpan
-                param={param}
-                paramKey={`${stepIdx}-${pIdx}`}
-                hoveredParam={hoveredParam}
-                setHoveredParam={setHoveredParam}
-              />
-            ) : (
-              <StaticParamSpan param={param} />
-            )}
-          </Fragment>
-        ))}
-        <Punc>)</Punc>
-      </code>
+      <div style={{ minWidth: 0, flex: 1, overflowX: 'auto', WebkitOverflowScrolling: 'touch' } as React.CSSProperties}>
+        <code style={{ fontFamily: MONO, fontSize: isMobile ? CODE_SIZE_MOBILE : CODE_SIZE, whiteSpace: 'nowrap', display: 'block' }}>
+          <ContractName>{step.contract}</ContractName>
+          <Punc>.</Punc>
+          <FnName>{step.fn}</FnName>
+          <Punc>(</Punc>
+          {step.params.map((param, pIdx) => (
+            <Fragment key={pIdx}>
+              {pIdx > 0 && <Punc>, </Punc>}
+              {param.type === 'runtime' ? (
+                <RuntimeParamSpan
+                  param={param}
+                  paramKey={`${stepIdx}-${pIdx}`}
+                  hoveredParam={hoveredParam}
+                  setHoveredParam={setHoveredParam}
+                  isMobile={isMobile}
+                />
+              ) : (
+                <StaticParamSpan param={param} />
+              )}
+            </Fragment>
+          ))}
+          <Punc>)</Punc>
+        </code>
+      </div>
     </div>
   );
 }
@@ -529,86 +586,92 @@ function PredicateStepRow({
   stepIdx,
   hoveredParam,
   setHoveredParam,
+  isMobile,
 }: {
   step: PredicateStep;
   stepIdx: number;
   hoveredParam: string | null;
   setHoveredParam: (k: string | null) => void;
+  isMobile: boolean;
 }) {
   const paramKey = `pred-${stepIdx}`;
   const active = hoveredParam === paramKey;
   const opSymbol = OP_SYMBOLS[step.constraintOp] || step.constraintOp;
 
   return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+    <div style={{ display: 'flex', alignItems: 'center', gap: isMobile ? 10 : 14, maxWidth: '100%' }}>
       <span style={predicateBadgeStyle}>
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
           <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" strokeLinecap="round" strokeLinejoin="round" />
         </svg>
       </span>
-      <span
-        onMouseEnter={() => setHoveredParam(paramKey)}
-        onMouseLeave={() => setHoveredParam(null)}
-        onClick={() => setHoveredParam(active ? null : paramKey)}
-        style={{ cursor: 'pointer', position: 'relative' }}
-      >
-        <code
-          style={{
-            fontFamily: MONO,
-            fontSize: CODE_SIZE,
-            whiteSpace: 'nowrap',
-            padding: '6px 14px',
-            borderRadius: 6,
-            background: active ? 'rgba(22,163,74,0.08)' : 'rgba(22,163,74,0.03)',
-            border: `1.5px dashed ${active ? SUCCESS : 'rgba(22,163,74,0.25)'}`,
-            transition: 'all 0.2s ease',
-            boxShadow: active ? '0 0 0 4px rgba(22,163,74,0.06)' : 'none',
-          }}
+      <div style={{ minWidth: 0, flex: 1, overflowX: 'auto', WebkitOverflowScrolling: 'touch' } as React.CSSProperties}>
+        <span
+          onMouseEnter={isMobile ? undefined : () => setHoveredParam(paramKey)}
+          onMouseLeave={isMobile ? undefined : () => setHoveredParam(null)}
+          onClick={() => setHoveredParam(active ? null : paramKey)}
+          style={{ cursor: 'pointer', position: 'relative', display: 'inline-block' }}
         >
-          <span style={{ color: SUCCESS, fontWeight: 500 }}>assert</span>
-          <span style={{ color: '#717171' }}>{'\u00A0\u00A0'}</span>
-          <span style={{ color: '#1a1a1a' }}>
-            {step.assertLabel || (
-              <>BALANCE({step.balanceToken}, <span style={{ color: '#a3a3a3' }}>self</span>)</>
-            )}
-          </span>
-          <span style={{ color: '#717171' }}> {opSymbol} </span>
-          <span style={{ color: '#1a1a1a' }}>{step.constraintRef}</span>
-        </code>
-
-        <ResolverTooltip active={active} header="Predicate entry \u2014 no call executed">
-          <TipRow label="Fetcher type">
-            <FetcherBadge>{step.fetcherType}</FetcherBadge>
-          </TipRow>
-          <TipRow label="Resolves via">
-            <code style={{ fontFamily: MONO, fontSize: 12, color: '#1a1a1a' }}>
-              {step.resolveCall || (
-                <>IERC20({step.balanceToken}).balanceOf(
-                <span style={{ color: '#8a8a8a' }}>self</span>)</>
+          <code
+            style={{
+              fontFamily: MONO,
+              fontSize: isMobile ? CODE_SIZE_MOBILE : CODE_SIZE,
+              whiteSpace: 'nowrap',
+              padding: isMobile ? '4px 10px' : '6px 14px',
+              borderRadius: 6,
+              background: active ? 'rgba(22,163,74,0.08)' : 'rgba(22,163,74,0.03)',
+              border: `1.5px dashed ${active ? SUCCESS : 'rgba(22,163,74,0.25)'}`,
+              transition: 'all 0.2s ease',
+              boxShadow: active ? '0 0 0 4px rgba(22,163,74,0.06)' : 'none',
+            }}
+          >
+            <span style={{ color: SUCCESS, fontWeight: 500 }}>assert</span>
+            <span style={{ color: '#717171' }}>{'\u00A0\u00A0'}</span>
+            <span style={{ color: '#1a1a1a' }}>
+              {step.assertLabel || (
+                <>BALANCE({step.balanceToken}, <span style={{ color: '#a3a3a3' }}>self</span>)</>
               )}
-            </code>
-          </TipRow>
-          <TipRow label="Returns">
-            <code style={{ fontFamily: MONO, fontSize: 12, color: SUCCESS, fontWeight: 500 }}>
-              {step.resolvedRaw}
-            </code>
-            <span style={{ fontSize: 11, color: '#8a8a8a', marginLeft: 6 }}>
-              ({step.resolvedHuman})
             </span>
-          </TipRow>
-          <TipRow label="Constraint" last>
-            <code style={{ fontFamily: MONO, fontSize: 12 }}>
-              <span style={{ color: '#1a1a1a' }}>
-                {step.constraintOp}({step.constraintRef})
-              </span>
-            </code>
-            <div style={{ fontSize: 11, color: '#8a8a8a', marginTop: 4 }}>
-              {step.resolvedHuman.split(' ')[0]} {opSymbol} {step.constraintRefHuman.split(' ')[0]}
-              <span style={{ color: SUCCESS, marginLeft: 6, fontWeight: 500 }}>✓ pass</span>
-            </div>
-          </TipRow>
-        </ResolverTooltip>
-      </span>
+            <span style={{ color: '#717171' }}> {opSymbol} </span>
+            <span style={{ color: '#1a1a1a' }}>{step.constraintRef}</span>
+          </code>
+
+          {!isMobile && (
+            <ResolverTooltip active={active} header="Predicate entry — no call executed">
+              <TipRow label="Fetcher type">
+                <FetcherBadge>{step.fetcherType}</FetcherBadge>
+              </TipRow>
+              <TipRow label="Resolves via">
+                <code style={{ fontFamily: MONO, fontSize: 12, color: '#1a1a1a' }}>
+                  {step.resolveCall || (
+                    <>IERC20({step.balanceToken}).balanceOf(
+                    <span style={{ color: '#8a8a8a' }}>self</span>)</>
+                  )}
+                </code>
+              </TipRow>
+              <TipRow label="Returns">
+                <code style={{ fontFamily: MONO, fontSize: 12, color: SUCCESS, fontWeight: 500 }}>
+                  {step.resolvedRaw}
+                </code>
+                <span style={{ fontSize: 11, color: '#8a8a8a', marginLeft: 6 }}>
+                  ({step.resolvedHuman})
+                </span>
+              </TipRow>
+              <TipRow label="Constraint" last>
+                <code style={{ fontFamily: MONO, fontSize: 12 }}>
+                  <span style={{ color: '#1a1a1a' }}>
+                    {step.constraintOp}({step.constraintRef})
+                  </span>
+                </code>
+                <div style={{ fontSize: 11, color: '#8a8a8a', marginTop: 4 }}>
+                  {step.resolvedHuman.split(' ')[0]} {opSymbol} {step.constraintRefHuman.split(' ')[0]}
+                  <span style={{ color: SUCCESS, marginLeft: 6, fontWeight: 500 }}>✓ pass</span>
+                </div>
+              </TipRow>
+            </ResolverTooltip>
+          )}
+        </span>
+      </div>
     </div>
   );
 }
@@ -659,17 +722,165 @@ function TipRow({
   );
 }
 
+/* ── Mobile info panel ────────────────────────────────────────── */
+
+function MobileParamPanel({ info }: { info: ActiveParamInfo }) {
+  const isRuntime = info.type === 'runtime';
+  const tint = isRuntime ? ACCENT : SUCCESS;
+  const tintBg = isRuntime ? 'rgba(37,99,235,0.03)' : 'rgba(22,163,74,0.03)';
+  const tintBorder = isRuntime ? 'rgba(37,99,235,0.12)' : 'rgba(22,163,74,0.12)';
+  const headerText = isRuntime ? 'Resolved at execution time' : 'Predicate entry — no call executed';
+
+  let rows: { label: string; content: React.ReactNode }[];
+
+  if (info.type === 'runtime') {
+    const p = info.param;
+    rows = [
+      {
+        label: 'Fetcher type',
+        content: <FetcherBadge>{p.fetcherType}</FetcherBadge>,
+      },
+      {
+        label: 'Resolves via',
+        content: (
+          <code style={{ fontFamily: MONO, fontSize: 11, color: '#1a1a1a', wordBreak: 'break-all' }}>
+            IERC20({p.balanceToken}).balanceOf(<span style={{ color: '#8a8a8a' }}>self</span>)
+          </code>
+        ),
+      },
+      {
+        label: 'Returns',
+        content: (
+          <>
+            <code style={{ fontFamily: MONO, fontSize: 11, color: SUCCESS, fontWeight: 500 }}>
+              {p.returnsRaw}
+            </code>
+            <span style={{ fontSize: 10, color: '#8a8a8a', marginLeft: 4 }}>
+              ({p.returnsHuman})
+            </span>
+          </>
+        ),
+      },
+      {
+        label: 'Constraint',
+        content: (
+          <code style={{ fontFamily: MONO, fontSize: 11 }}>
+            <span style={{ color: '#1a1a1a' }}>{p.constraint}</span>
+            <span style={{ color: SUCCESS, marginLeft: 4 }}>✓ pass</span>
+          </code>
+        ),
+      },
+    ];
+  } else {
+    const s = info.step;
+    const opSymbol = OP_SYMBOLS[s.constraintOp] || s.constraintOp;
+    rows = [
+      {
+        label: 'Fetcher type',
+        content: <FetcherBadge>{s.fetcherType}</FetcherBadge>,
+      },
+      {
+        label: 'Resolves via',
+        content: (
+          <code style={{ fontFamily: MONO, fontSize: 11, color: '#1a1a1a', wordBreak: 'break-all' }}>
+            {s.resolveCall || (
+              <>IERC20({s.balanceToken}).balanceOf(<span style={{ color: '#8a8a8a' }}>self</span>)</>
+            )}
+          </code>
+        ),
+      },
+      {
+        label: 'Returns',
+        content: (
+          <>
+            <code style={{ fontFamily: MONO, fontSize: 11, color: SUCCESS, fontWeight: 500 }}>
+              {s.resolvedRaw}
+            </code>
+            <span style={{ fontSize: 10, color: '#8a8a8a', marginLeft: 4 }}>
+              ({s.resolvedHuman})
+            </span>
+          </>
+        ),
+      },
+      {
+        label: 'Constraint',
+        content: (
+          <>
+            <code style={{ fontFamily: MONO, fontSize: 11, color: '#1a1a1a' }}>
+              {s.constraintOp}({s.constraintRef})
+            </code>
+            <div style={{ fontSize: 10, color: '#8a8a8a', marginTop: 2 }}>
+              {s.resolvedHuman.split(' ')[0]} {opSymbol} {s.constraintRefHuman.split(' ')[0]}
+              <span style={{ color: SUCCESS, marginLeft: 4, fontWeight: 500 }}>✓ pass</span>
+            </div>
+          </>
+        ),
+      },
+    ];
+  }
+
+  return (
+    <div
+      style={{
+        marginTop: 16,
+        padding: '14px 16px',
+        background: tintBg,
+        border: `1px solid ${tintBorder}`,
+        borderRadius: 8,
+      }}
+    >
+      <div
+        style={{
+          fontSize: 10,
+          fontFamily: MONO,
+          color: '#8a8a8a',
+          textTransform: 'uppercase',
+          letterSpacing: '0.05em',
+          marginBottom: 12,
+          display: 'flex',
+          alignItems: 'center',
+          gap: 5,
+        }}
+      >
+        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#8a8a8a" strokeWidth="2">
+          <circle cx="12" cy="12" r="10" />
+          <path d="M12 6v6l4 2" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+        {headerText}
+      </div>
+      <div
+        style={{
+          display: 'flex',
+          flexDirection: 'column',
+          gap: 10,
+          borderLeft: `2px solid ${tintBorder}`,
+          paddingLeft: 12,
+        }}
+      >
+        {rows.map((row, i) => (
+          <div key={i}>
+            <div style={{ fontSize: 10, color: '#a3a3a3', marginBottom: 2 }}>{row.label}</div>
+            {row.content}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 /* ── Main component ───────────────────────────────────────────── */
 
 export default function BatchVisualization() {
   const [activeTab, setActiveTab] = useState(0);
   const [hoveredParam, setHoveredParam] = useState<string | null>(null);
+  const isMobile = useIsMobile();
 
   const example = EXAMPLES[activeTab];
+  const activeInfo = isMobile ? getActiveParamInfo(example, hoveredParam) : null;
 
   return (
-    <section id="solution" className="py-20 border-t border-ink-100">
-      <div className="mx-auto px-6" style={{ maxWidth: 1060 }}>
+    <section id="solution" className="py-16 sm:py-20 border-t border-ink-100">
+      <div className="mx-auto px-4 sm:px-6" style={{ maxWidth: 1060 }}>
         <h2
           className="text-3xl sm:text-4xl font-bold mb-4"
           style={{ fontFamily: '"Source Serif 4", Georgia, serif', color: '#111' }}
@@ -679,12 +890,14 @@ export default function BatchVisualization() {
 
         {/* Tabs */}
         <div
+          className="hide-scrollbar"
           style={{
             display: 'flex',
             gap: 0,
             marginBottom: 20,
             overflowX: 'auto',
-          }}
+            WebkitOverflowScrolling: 'touch',
+          } as React.CSSProperties}
         >
           {EXAMPLES.map((ex, i) => {
             const isActive = activeTab === i;
@@ -696,8 +909,8 @@ export default function BatchVisualization() {
                   setHoveredParam(null);
                 }}
                 style={{
-                  padding: '10px 20px',
-                  fontSize: 13,
+                  padding: isMobile ? '8px 14px' : '10px 20px',
+                  fontSize: isMobile ? 12 : 13,
                   fontFamily: MONO,
                   background: 'none',
                   border: 'none',
@@ -715,7 +928,7 @@ export default function BatchVisualization() {
         </div>
 
         {/* Per-example subtitle */}
-        <p style={{ color: '#555', lineHeight: 1.7, marginBottom: '1.5rem', maxWidth: 580 }}>
+        <p style={{ color: '#555', lineHeight: 1.7, marginBottom: '1.5rem', maxWidth: 580, fontSize: isMobile ? 14 : undefined }}>
           {example.subtitle}
         </p>
 
@@ -725,7 +938,7 @@ export default function BatchVisualization() {
             background: '#fff',
             border: '1px solid #ebebeb',
             borderRadius: 10,
-            padding: '2.5rem 2rem',
+            padding: isMobile ? '1.25rem 1rem' : '2.5rem 2rem',
             display: 'flex',
             flexDirection: 'column',
             alignItems: 'center',
@@ -739,13 +952,14 @@ export default function BatchVisualization() {
                   display: 'flex',
                   alignItems: 'center',
                   gap: 8,
-                  padding: '8px 16px',
+                  padding: isMobile ? '6px 12px' : '8px 16px',
                   borderRadius: 8,
                   background: 'rgba(0,0,0,0.02)',
                   border: '1px solid #ebebeb',
-                  fontSize: 12,
+                  fontSize: isMobile ? 11 : 12,
                   fontFamily: MONO,
                   color: '#8a8a8a',
+                  maxWidth: '100%',
                 }}
               >
                 <svg
@@ -755,6 +969,7 @@ export default function BatchVisualization() {
                   fill="none"
                   stroke="#a3a3a3"
                   strokeWidth="2"
+                  style={{ flexShrink: 0 }}
                 >
                   <path
                     d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2z"
@@ -763,7 +978,7 @@ export default function BatchVisualization() {
                   />
                   <path d="M12 6v6l4 2" strokeLinecap="round" strokeLinejoin="round" />
                 </svg>
-                {example.contextNote}
+                <span>{example.contextNote}</span>
               </div>
               <Connector />
             </>
@@ -778,6 +993,7 @@ export default function BatchVisualization() {
                   stepIdx={stepIdx}
                   hoveredParam={hoveredParam}
                   setHoveredParam={setHoveredParam}
+                  isMobile={isMobile}
                 />
               ) : (
                 <CallStepRow
@@ -785,10 +1001,14 @@ export default function BatchVisualization() {
                   stepIdx={stepIdx}
                   hoveredParam={hoveredParam}
                   setHoveredParam={setHoveredParam}
+                  isMobile={isMobile}
                 />
               )}
             </Fragment>
           ))}
+
+          {/* Mobile info panel */}
+          {isMobile && activeInfo && <MobileParamPanel info={activeInfo} />}
 
           {/* Hint */}
           <div
@@ -799,9 +1019,12 @@ export default function BatchVisualization() {
               fontStyle: 'italic',
               opacity: hoveredParam ? 0 : 1,
               transition: 'opacity 0.15s ease',
+              textAlign: 'center',
             }}
           >
-            Hover an interactive parameter to see how it resolves
+            {isMobile
+              ? 'Tap an interactive parameter to see how it resolves'
+              : 'Hover an interactive parameter to see how it resolves'}
           </div>
         </div>
       </div>

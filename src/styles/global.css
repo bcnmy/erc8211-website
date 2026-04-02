@@ -17,6 +17,7 @@
     background-color: #fafaf9;
     line-height: 1.7;
     font-size: 15px;
+    overflow-x: hidden;
   }
 
   ::selection {
@@ -45,11 +46,11 @@
 
 @layer components {
   .article-container {
-    @apply max-w-wide mx-auto px-6;
+    @apply max-w-wide mx-auto px-4 sm:px-6;
   }
 
   .wide-container {
-    @apply max-w-wide mx-auto px-6;
+    @apply max-w-wide mx-auto px-4 sm:px-6;
   }
 
   .label {
@@ -99,6 +100,14 @@
   .prose-body p:last-child {
     margin-bottom: 0;
   }
+}
+
+.hide-scrollbar {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.hide-scrollbar::-webkit-scrollbar {
+  display: none;
 }
 
 @media (prefers-reduced-motion: reduce) {

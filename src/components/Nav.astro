@@ -17,14 +17,89 @@
         <a href="#cross-chain" class="text-ink-400 hover:text-ink-900 transition-colors">Cross-Chain</a>
       </div>
 
-      <a
-        href="https://github.com/ethereum/ERCs/pull/XXXX"
-        target="_blank"
-        rel="noopener noreferrer"
-        class="text-sm text-accent hover:underline"
-      >
-        Read the spec &rarr;
-      </a>
+      <div class="flex items-center gap-3">
+        <a
+          href="https://github.com/ethereum/ERCs/pull/XXXX"
+          target="_blank"
+          rel="noopener noreferrer"
+          class="text-sm text-accent hover:underline hidden sm:inline"
+        >
+          Read the spec &rarr;
+        </a>
+
+        <button
+          id="mobile-menu-btn"
+          class="md:hidden flex items-center justify-center w-8 h-8 -mr-1"
+          aria-label="Toggle navigation menu"
+          aria-expanded="false"
+        >
+          <svg id="menu-icon-open" class="w-5 h-5 text-ink-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 9h16.5m-16.5 6.75h16.5" />
+          </svg>
+          <svg id="menu-icon-close" class="w-5 h-5 text-ink-600 hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" />
+          </svg>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <div
+    id="mobile-menu"
+    class="md:hidden overflow-hidden transition-[max-height] duration-300 ease-in-out"
+    style="max-height: 0;"
+  >
+    <div class="wide-container pb-4 pt-1 flex flex-col gap-0.5 border-t border-ink-100/60">
+      <a href="#problem" class="mobile-nav-link text-sm text-ink-500 py-2.5 px-3 rounded-lg active:bg-ink-50 transition-colors">Problem</a>
+      <a href="#solution" class="mobile-nav-link text-sm text-ink-500 py-2.5 px-3 rounded-lg active:bg-ink-50 transition-colors">Solution</a>
+      <a href="#how-it-works" class="mobile-nav-link text-sm text-ink-500 py-2.5 px-3 rounded-lg active:bg-ink-50 transition-colors">How It Works</a>
+      <a href="#cross-chain" class="mobile-nav-link text-sm text-ink-500 py-2.5 px-3 rounded-lg active:bg-ink-50 transition-colors">Cross-Chain</a>
+      <a href="#developer-experience" class="mobile-nav-link text-sm text-ink-500 py-2.5 px-3 rounded-lg active:bg-ink-50 transition-colors">Developer Experience</a>
+      <a href="#compatibility" class="mobile-nav-link text-sm text-ink-500 py-2.5 px-3 rounded-lg active:bg-ink-50 transition-colors">Compatibility</a>
+      <div class="mt-1 pt-2 border-t border-ink-100/60">
+        <a
+          href="https://github.com/ethereum/ERCs/pull/XXXX"
+          target="_blank"
+          rel="noopener noreferrer"
+          class="mobile-nav-link text-sm text-accent font-medium py-2.5 px-3 block"
+        >
+          Read the spec &rarr;
+        </a>
+      </div>
     </div>
   </div>
 </nav>
+
+<script>
+  const btn = document.getElementById('mobile-menu-btn');
+  const menu = document.getElementById('mobile-menu');
+  const iconOpen = document.getElementById('menu-icon-open');
+  const iconClose = document.getElementById('menu-icon-close');
+
+  let isOpen = false;
+
+  function closeMenu() {
+    isOpen = false;
+    btn?.setAttribute('aria-expanded', 'false');
+    if (menu) menu.style.maxHeight = '0';
+    iconOpen?.classList.remove('hidden');
+    iconClose?.classList.add('hidden');
+  }
+
+  btn?.addEventListener('click', () => {
+    isOpen = !isOpen;
+    btn.setAttribute('aria-expanded', String(isOpen));
+
+    if (isOpen) {
+      if (menu) menu.style.maxHeight = menu.scrollHeight + 'px';
+      iconOpen?.classList.add('hidden');
+      iconClose?.classList.remove('hidden');
+    } else {
+      closeMenu();
+    }
+  });
+
+  document.querySelectorAll('.mobile-nav-link').forEach(link => {
+    link.addEventListener('click', closeMenu);
+  });
+</script>

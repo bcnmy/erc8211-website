@@ -11,8 +11,8 @@ export default function CrossChain() {
   const [activeChain, setActiveChain] = useState<number | null>(null);
 
   return (
-    <section id="cross-chain" className="py-20" style={{ borderTop: '1px solid #ebebeb' }}>
-      <div className="max-w-[960px] mx-auto px-6">
+      <section id="cross-chain" className="py-14 sm:py-20" style={{ borderTop: '1px solid #ebebeb' }}>
+        <div className="max-w-[960px] mx-auto px-4 sm:px-6">
         <h2
           className="text-3xl sm:text-4xl font-bold mb-4"
           style={{ fontFamily: '"Source Serif 4", Georgia, serif', color: '#111' }}
