@@ -50,8 +50,7 @@
   }
 
   .hero-container {
-    @apply mx-auto px-4 sm:px-6;
-    max-width: 1200px;
+    @apply max-w-wide mx-auto px-4 sm:px-6;
   }
 
   .wide-container {
