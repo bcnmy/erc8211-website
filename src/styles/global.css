@@ -49,6 +49,11 @@
     @apply max-w-wide mx-auto px-4 sm:px-6;
   }
 
+  .hero-container {
+    @apply mx-auto px-4 sm:px-6;
+    max-width: 1200px;
+  }
+
   .wide-container {
     @apply max-w-wide mx-auto px-4 sm:px-6;
   }
