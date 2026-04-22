@@ -1,0 +1,97 @@
+---
+import { getCollection } from 'astro:content';
+import Layout from '../../layouts/Layout.astro';
+import Nav from '../../components/Nav.astro';
+import Footer from '../../components/Footer.astro';
+
+const updates = (await getCollection('updates')).sort(
+  (a, b) => b.data.publishedAt.valueOf() - a.data.publishedAt.valueOf(),
+);
+
+const formatDate = (d: Date) =>
+  d.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+---
+
+<Layout
+  title="Updates — ERC-8211"
+  description="Progress notes, review feedback, and design rationale on ERC-8211 (Smart Batching) as it evolves through public review."
+>
+  <Nav />
+  <main>
+    <section class="pt-12 sm:pt-20 pb-8 sm:pb-12 border-b border-ink-100">
+      <div class="article-container">
+        <div class="flex items-center gap-2 mb-5">
+          <span class="label">Updates</span>
+          <span class="text-ink-300 text-xs">&middot;</span>
+          <span class="text-xs font-mono text-ink-400 tracking-wide">
+            {updates.length} {updates.length === 1 ? 'post' : 'posts'}
+          </span>
+        </div>
+        <h1 class="text-4xl sm:text-5xl font-display font-semibold tracking-tight text-ink-950 mb-5">
+          Updates
+        </h1>
+        <p class="text-base sm:text-lg text-ink-500 leading-relaxed max-w-article">
+          Progress notes, public-review feedback, and design rationale on
+          ERC-8211 as it evolves. Written for people reading the spec, shipping
+          against the draft, or pushing back on it.
+        </p>
+      </div>
+    </section>
+
+    <section class="py-12 sm:py-16">
+      <div class="article-container">
+        {updates.length === 0 ? (
+          <p class="text-ink-500">No updates yet. Check back soon.</p>
+        ) : (
+          <ol class="divide-y divide-ink-100">
+            {updates.map((post) => (
+              <li class="py-8 first:pt-0 last:pb-0">
+                <a
+                  href={`/updates/${post.id}`}
+                  class="group grid grid-cols-1 sm:grid-cols-[160px_1fr] gap-2 sm:gap-10"
+                >
+                  <div class="flex sm:block items-center gap-3">
+                    <time
+                      datetime={post.data.publishedAt.toISOString()}
+                      class="text-xs font-mono text-ink-400 tracking-wide uppercase"
+                    >
+                      {formatDate(post.data.publishedAt)}
+                    </time>
+                    <span class="sm:hidden text-ink-300 text-xs">&middot;</span>
+                    <span class="sm:hidden text-xs font-mono text-ink-400">
+                      {post.data.author}
+                    </span>
+                  </div>
+                  <div>
+                    <h2 class="text-xl sm:text-2xl font-display font-semibold text-ink-950 leading-snug mb-2 group-hover:text-accent transition-colors">
+                      {post.data.title}
+                    </h2>
+                    <p class="text-ink-500 leading-relaxed mb-3">
+                      {post.data.description}
+                    </p>
+                    <div class="flex items-center gap-3 text-xs font-mono text-ink-400">
+                      <span class="hidden sm:inline">{post.data.author}</span>
+                      {post.data.tags.length > 0 && (
+                        <>
+                          <span class="hidden sm:inline text-ink-300">&middot;</span>
+                          <div class="flex flex-wrap gap-1.5">
+                            {post.data.tags.map((tag) => (
+                              <span class="px-1.5 py-0.5 bg-ink-50 rounded text-ink-500">
+                                {tag}
+                              </span>
+                            ))}
+                          </div>
+                        </>
+                      )}
+                    </div>
+                  </div>
+                </a>
+              </li>
+            ))}
+          </ol>
+        )}
+      </div>
+    </section>
+  </main>
+  <Footer />
+</Layout>

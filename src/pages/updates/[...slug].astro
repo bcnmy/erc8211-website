@@ -1,0 +1,95 @@
+---
+import { getCollection, render } from 'astro:content';
+import Layout from '../../layouts/Layout.astro';
+import Nav from '../../components/Nav.astro';
+import Footer from '../../components/Footer.astro';
+
+export async function getStaticPaths() {
+  const updates = await getCollection('updates');
+  return updates.map((post) => ({
+    params: { slug: post.id },
+    props: { post },
+  }));
+}
+
+const { post } = Astro.props;
+const { Content } = await render(post);
+
+const formatDate = (d: Date) =>
+  d.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+---
+
+<Layout title={`${post.data.title} — ERC-8211 Updates`} description={post.data.description}>
+  <Nav />
+  <main>
+    <article class="pt-10 sm:pt-14 pb-16 sm:pb-24">
+      <header class="article-container mb-10 sm:mb-14">
+        <div class="max-w-article">
+          <a
+            href="/updates"
+            class="inline-flex items-center gap-1.5 text-xs font-mono text-ink-400 hover:text-ink-700 transition-colors mb-8"
+          >
+            <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+            </svg>
+            All updates
+          </a>
+
+          <div class="flex items-center gap-2 mb-5">
+            <span class="label">Update</span>
+            <span class="text-ink-300 text-xs">&middot;</span>
+            <time
+              datetime={post.data.publishedAt.toISOString()}
+              class="text-xs font-mono text-ink-400 tracking-wide uppercase"
+            >
+              {formatDate(post.data.publishedAt)}
+            </time>
+          </div>
+
+          <h1 class="text-3xl sm:text-4xl lg:text-[2.75rem] font-display font-semibold tracking-tight text-ink-950 leading-[1.15] mb-5">
+            {post.data.title}
+          </h1>
+
+          <p class="text-base sm:text-lg text-ink-500 leading-relaxed mb-6">
+            {post.data.description}
+          </p>
+
+          <div class="flex items-center gap-3 text-xs font-mono text-ink-400 pt-4 border-t border-ink-100">
+            <span>By {post.data.author}</span>
+            {post.data.tags.length > 0 && (
+              <>
+                <span class="text-ink-300">&middot;</span>
+                <div class="flex flex-wrap gap-1.5">
+                  {post.data.tags.map((tag) => (
+                    <span class="px-1.5 py-0.5 bg-ink-50 rounded text-ink-500">{tag}</span>
+                  ))}
+                </div>
+              </>
+            )}
+          </div>
+        </div>
+      </header>
+
+      <div class="article-container">
+        <div class="prose-article max-w-article">
+          <Content />
+        </div>
+      </div>
+
+      <div class="article-container mt-14 sm:mt-20">
+        <div class="max-w-article pt-8 border-t border-ink-100">
+          <a
+            href="/updates"
+            class="inline-flex items-center gap-1.5 text-sm text-accent hover:underline font-medium"
+          >
+            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+            </svg>
+            Back to all updates
+          </a>
+        </div>
+      </div>
+    </article>
+  </main>
+  <Footer />
+</Layout>
